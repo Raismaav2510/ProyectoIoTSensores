@@ -12,6 +12,7 @@ LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
 const int DHTPin = 5;
 const int FCPin = 34;
+const int BombaPin = 2;
 DHT dht(DHTPin, DHTTYPE);
 
 const char* ssid = "LAISHA";  // Tu SSID
@@ -69,6 +70,7 @@ void handle_OnConnect() {
 }
 
 void setup() {
+    pinMode(BombaPin, OUTPUT);
     Serial.begin(115200);
     lcd.init();
     lcd.backlight();
@@ -84,13 +86,20 @@ void setup() {
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
+        lcd.setCursor(0, 0);
+        lcd.print("Buscando red:");
+        lcd.setCursor(0, 1);
+        lcd.println(ssid);
     }
+    lcd.clear();
     Serial.println("");
     Serial.print("Conectado a ");
     Serial.println(ssid);
     Serial.print("Direccion IP: ");
     Serial.println(WiFi.localIP());
     lcd.setCursor(0, 0);
+    lcd.print("Direccion IP:");
+    lcd.setCursor(0, 1);
     lcd.println(WiFi.localIP());
 
     server.on("/", handle_OnConnect); // 1
@@ -106,6 +115,12 @@ void loop() {
     hA = dht.readHumidity();
     t = dht.readTemperature();
     server.handleClient();
+
+    if (hD > 50) {
+        digitalWrite(BombaPin, LOW);
+    } else {
+        digitalWrite(BombaPin, HIGH);
+    }
 
     delay(2000);
     lcd.clear();
