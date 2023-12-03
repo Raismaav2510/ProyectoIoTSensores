@@ -2,6 +2,7 @@
 #include <DHT.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <HTTPClient.h>
 #include <LiquidCrystal_I2C.h>
 
 #define DHTTYPE DHT11
@@ -10,13 +11,14 @@ const int lcdColumns = 16;
 const int lcdRows = 2;
 LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
+const int BombaPin = 2;
 const int DHTPin = 5;
 const int FCPin = 34;
-const int BombaPin = 2;
+
 DHT dht(DHTPin, DHTTYPE);
 
-const char* ssid = "LAISHA";  // Tu SSID
-const char* password = "laisha1308";  //Tu Clave
+const char* ssid = "Next";  // Tu SSID
+const char* password = ":v123456789";  //Tu Clave
 WebServer server(80);
 
 float hD = 0;
@@ -33,7 +35,7 @@ String SendHTML() {
 
     // <meta> viewport. Para que la pagina se vea correctamente en cualquier dispositivo
     ptr += "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\", charset=\"UTF-8\">\n";
-    ptr += "<title>Control LED</title>\n";
+    ptr += "<title>Control Humedad</title>\n";
     ptr += "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
     ptr += "body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 50px;}\n";
     ptr += ".button {display: block;width: 80px;background-color: #3498db;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 4px;}\n";
@@ -69,13 +71,32 @@ void handle_OnConnect() {
     server.send(200, "text/html", SendHTML());
 }
 
+void apiConetion() {
+    HTTPClient http;
+    String data = "ha=" + String(hA) + "&hd=" + String(hD) + "&t=" + String(t);
+    http.begin("http://192.168.1.110/iot/iotDataSensors.php");
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    int httpCode = http.POST(data);
+
+    if (httpCode > 0) {
+        Serial.println("HTTP - " + String(httpCode));
+        if (httpCode == 200){
+            String request = http.getString();
+            Serial. println (request);
+        }
+    } else {
+        Serial.println("HTTP - " + String(httpCode));
+    }
+    http.end();
+}
+
 void setup() {
     pinMode(BombaPin, OUTPUT);
     Serial.begin(115200);
     lcd.init();
     lcd.backlight();
 
-    Serial.println("DHT11 test!");
+    Serial.println("Sensores RL");
     dht.begin();
 
     WiFi.mode(WIFI_STA);
@@ -122,11 +143,12 @@ void loop() {
         digitalWrite(BombaPin, HIGH);
     }
 
-    delay(2000);
+    delay(2500);
     lcd.clear();
     if (isnan(hA) || isnan(t)) {
         lcd.setCursor(0, 0);
         lcd.println("Failed to read from DHT sensor!");
+        Serial.print("Failed to read from DHT sensor!");
         return;
     }
     lcd.setCursor(0, 0);
@@ -137,11 +159,13 @@ void loop() {
     lcd.print(hD);
     lcd.print("%");
 
-    delay(2000);
+    delay(2500);
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Temperatura: ");
     lcd.setCursor(0, 1);
     lcd.print(t);
     lcd.print(" *C");
+
+    apiConetion();
 }
