@@ -17,8 +17,8 @@ const int FCPin = 34;
 
 DHT dht(DHTPin, DHTTYPE);
 
-const char* ssid = "Next";  // Tu SSID
-const char* password = ":v123456789";  //Tu Clave
+const char* ssid = "MaAv-Mesh";  // Tu SSID
+const char* password = "u5b2nUb3sP";  //Tu Clave
 WebServer server(80);
 
 float hD = 0;
@@ -74,7 +74,7 @@ void handle_OnConnect() {
 void apiConetion() {
     HTTPClient http;
     String data = "ha=" + String(hA) + "&hd=" + String(hD) + "&t=" + String(t);
-    http.begin("http://192.168.1.110/iot/iotDataSensors.php");
+    http.begin("http://192.168.3.75/iot/iotDevicesAPI/iotDataSensors.php");
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     int httpCode = http.POST(data);
 
